@@ -1,170 +1,202 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import requests
 import io
 import certifi
 
-# ========================================================
-# 📥 DATA CONFIGURATION
-# ========================================================
+# CONFIG
 SHEET_ID = "1cCapuxabacizn8FPo1KZ3ynDPRqjdAbqzmnrcAvk2I8"
-
-# ✅ FIXED (use gviz)
 BASE_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&gid="
 
 GIDS = {
     "Center": "1802316304", 
     "Left": "1621742014", 
-    "Right": "1180122255", 
-    "Config": "401984418" 
+    "Right": "1180122255"
 }
 
-@st.cache_data(ttl=60)
-def load_tab(gid):
+st.set_page_config(layout="wide", page_title="American Kaka Chale Waka", page_icon="🎬")
+
+# 🔥 TAB + UI STYLING
+st.markdown("""
+<style>
+
+/* 🔥 Tabs styling */
+div[data-baseweb="tab-list"] {
+    gap: 8px;
+}
+
+button[role="tab"] {
+    background-color: #f1f3f6 !important;
+    border-radius: 10px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    color: #444 !important;
+}
+
+/* ACTIVE TAB */
+button[aria-selected="true"] {
+    background-color: #111827 !important;  /* dark */
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+/* Seat styles */
+.mobile-wrapper { overflow-x: auto; }
+.seat-table { border-spacing: 4px; margin: auto; }
+
+.seat {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+}
+
+.seat-num { font-size: 10px; }
+.seat-price { font-size: 8px; }
+
+.available { background: #2ecc71; }
+.sold { background: #e74c3c; }
+
+.row-label {
+    font-weight: bold;
+    padding-right: 8px;
+    text-align: right;
+    min-width: 40px;
+}
+
+.section-header {
+    font-weight: bold;
+    text-align: center;
+}
+
+@media (max-width:600px){
+    .seat { width: 28px; height: 28px; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+@st.cache_data(ttl=2)
+def load_data(gid):
     try:
-        url = f"{BASE_URL}{gid}"
-        res = requests.get(url, verify=certifi.where(), timeout=10)
-
-        # 🚨 IMPORTANT (prevents silent failure)
-        if "<html" in res.text.lower():
-            st.error(f"GID {gid} not accessible (check sharing)")
-            return pd.DataFrame()
-
+        res = requests.get(f"{BASE_URL}{gid}", verify=certifi.where(), timeout=10)
         df = pd.read_csv(io.StringIO(res.text))
-
-        # CLEAN columns
-        df.columns = (
-            df.columns
-            .str.strip()
-            .str.replace("\n", "")
-            .str.replace("\r", "")
-            .str.replace(" ", "_")
-            .str.replace(r"[^\w]", "", regex=True)
-        )
-
-        df = df.dropna(how='all')
+        df.columns = df.columns.str.strip().str.replace(" ", "_").str.replace(r"[^\w]", "", regex=True)
+        df = df.dropna(subset=[df.columns[0]])
 
         if 'Seat_ID' in df.columns:
             df['m_id'] = df['Seat_ID'].astype(str).str.replace(r'[\s-]', '', regex=True).str.upper()
 
         return df
-
-    except Exception as e:
-        st.error(e)
+    except:
         return pd.DataFrame()
 
-# ========================================================
-# 🗺️ SECTIONED MAP GENERATOR
-# ========================================================
-def generate_sectioned_map(config_df, live_data_dict):
-    all_seats = []
-    row_labels = []
+def get_status(df, sec, row, seat):
+    target = f"{sec}{row}{seat:02d}"
+    if not df.empty:
+        match = df[df['m_id'] == target]
+        if not match.empty:
+            val = str(match.iloc[0].get("Seat_Status","")).lower()
+            if "sold" in val:
+                return "sold"
+    return "available"
 
-    valid_config = config_df.dropna(subset=['Section_Name', 'SeatsRow'])
+def get_price(sec, row):
+    if sec == "C" and row in ["A","B","C","D","E"]:
+        return 35
+    return 25
 
-    for _, cfg in valid_config.iterrows():
-        try:
-            sec_full = str(cfg['Section_Name'])
-            main_sec = sec_full.split('-')[0].strip()
-            num_rows = int(float(cfg['Rows']))
-            seats_per = int(float(cfg['SeatsRow']))
-            start_row = str(cfg['Start_Row']).strip().upper()
+def seat_html(status, num, price):
+    return f"""
+    <div class="seat {status}">
+        <div class="seat-num">{num}</div>
+        <div class="seat-price">${price}</div>
+    </div>
+    """
 
-            live_df = live_data_dict.get(main_sec, pd.DataFrame())
+def render_section(section, df):
+    rows = list("ABCDEFGHIJKLMN")
+    seats = 18 if section == "Center" else 3
 
-            for r_offset in range(num_rows):
-                row_char = chr(ord(start_row) + r_offset)
+    html = []
+    html.append(f'<tr><td></td><td colspan="{seats}" class="section-header">{section}</td></tr>')
 
-                if main_sec == "Left": x_base = 1 - 35
-                elif main_sec == "Right": x_base = 1 + 25
-                else: x_base = 1 - 12.5
+    for r in rows:
+        row_html = f'<tr><td class="row-label">{r}</td>'
+        for s in range(1, seats+1):
+            row_html += f'<td>{seat_html(get_status(df,section[0],r,s),s,get_price(section[0],r))}</td>'
+        row_html += '</tr>'
+        html.append(row_html)
 
-                row_labels.append({"x": x_base - 2, "y": -(ord(row_char) - 64), "text": row_char})
+    return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
-                for s in range(1, seats_per + 1):
-                    y_pos = -(ord(row_char) - 64)
+def render_full(left, center, right):
+    rows = list("ABCDEFGHIJKLMN")
+    html = []
 
-                    if main_sec == "Left": x_pos = s - 35
-                    elif main_sec == "Right": x_pos = s + 25
-                    else: x_pos = s - 12.5
+    html.append("""
+    <tr>
+        <td></td>
+        <td colspan="3" class="section-header">⬅️ Left</td>
+        <td></td>
+        <td colspan="18" class="section-header">🏛️ Center</td>
+        <td></td>
+        <td colspan="3" class="section-header">➡️ Right</td>
+    </tr>
+    """)
 
-                    m_id = f"{main_sec[0]}{s}{row_char}".upper()
-                    status = "Available"
+    for r in rows:
+        row_html = f'<tr><td class="row-label">{r}</td>'
 
-                    if not live_df.empty and 'm_id' in live_df.columns:
-                        match = live_df[live_df['m_id'] == m_id]
-                        if not match.empty:
-                            raw_s = str(match.iloc[0].get('Seat_Status', '')).lower()
-                            status = "Sold" if raw_s in ["sold", "pending"] else "Available"
+        for s in range(1,4):
+            row_html += f'<td>{seat_html(get_status(left,"L",r,s),s,get_price("L",r))}</td>'
 
-                    all_seats.append({
-                        "Section": sec_full,
-                        "Row": row_char,
-                        "Seat": s,
-                        "Status": status,
-                        "Label": str(s),
-                        "x": x_pos,
-                        "y": y_pos
-                    })
-        except:
-            continue
+        row_html += '<td></td>'
 
-    return pd.DataFrame(all_seats), pd.DataFrame(row_labels).drop_duplicates()
+        for s in range(1,19):
+            row_html += f'<td>{seat_html(get_status(center,"C",r,s),s,get_price("C",r))}</td>'
 
-# ========================================================
-# 🚀 STREAMLIT APP
-# ========================================================
-st.set_page_config(layout="wide")
-st.title("🎟️ American Kaka Chale Waka Live Seating")
+        row_html += '<td></td>'
 
-config_data = load_tab(GIDS["Config"])
-live_tabs = {s: load_tab(GIDS[s]) for s in ["Center", "Left", "Right"]}
+        for s in range(1,4):
+            row_html += f'<td>{seat_html(get_status(right,"R",r,s),s,get_price("R",r))}</td>'
 
-if not config_data.empty:
-    map_df, labels_df = generate_sectioned_map(config_data, live_tabs)
+        row_html += '</tr>'
+        html.append(row_html)
 
-    if not map_df.empty:
-        fig = px.scatter(
-            map_df, x="x", y="y", color="Status",
-            text="Label",
-            hover_data={"Section":True, "Row":True, "Seat":True},
-            color_discrete_map={
-                "Available": "#2ecc71",
-                "Sold": "#95a5a6",
-                "Missing": "#e74c3c"
-            }
-        )
+    return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
-        for _, lbl in labels_df.iterrows():
-            fig.add_annotation(
-                x=lbl['x'], y=lbl['y'], text=lbl['text'],
-                showarrow=False, font=dict(size=14),
-                xanchor="right"
-            )
+# LOAD
+data = {k: load_data(v) for k,v in GIDS.items()}
 
-        fig.update_traces(
-            marker=dict(size=22, symbol='square'),
-            textposition="middle center"
-        )
+st.title("🎬 American Kaka Chale Waka")
 
-        fig.update_layout(
-            xaxis_visible=False,
-            yaxis_visible=False,
-            height=850
-        )
+# 🔥 TABS WITH YOUR EMOJIS
+tab_map, tab_l, tab_c, tab_r = st.tabs([
+    "📍 Full Map",
+    "⬅️ Left",
+    "🏛️ Center",
+    "➡️ Right"
+])
 
-        st.plotly_chart(fig, use_container_width=True)
+with tab_map:
+    st.markdown(render_full(data["Left"], data["Center"], data["Right"]), unsafe_allow_html=True)
 
-        st.divider()
-        cols = st.columns(3)
-        for i, name in enumerate(["Left", "Center", "Right"]):
-            count = len(map_df[(map_df['Section'].str.contains(name)) & (map_df['Status'] == "Available")])
-            cols[i].metric(f"{name} Available", count)
+with tab_l:
+    st.markdown(render_section("Left", data["Left"]), unsafe_allow_html=True)
 
-else:
-    st.error("Missing SeatConfig")
+with tab_c:
+    st.markdown(render_section("Center", data["Center"]), unsafe_allow_html=True)
 
-if st.button("🔄 Sync Live Status"):
+with tab_r:
+    st.markdown(render_section("Right", data["Right"]), unsafe_allow_html=True)
+
+st.divider()
+
+if st.button("🔄 Refresh Seating", use_container_width=True):
     st.cache_data.clear()
     st.rerun()
