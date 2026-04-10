@@ -19,6 +19,7 @@ GIDS = {
 
 st.set_page_config(layout="wide", page_title="American Kaka Chale Waka", page_icon="🎬")
 
+@st.cache_data
 def get_local_img(file_path):
     try:
         with open(file_path, "rb") as f:
@@ -86,6 +87,7 @@ button[aria-selected="true"] {{ background-color: #111827 !important; color: whi
 .section-header {{ font-weight: bold; font-size: 12px; text-align: center; }}
 .mandatory, .red-text {{ color: #ff0000; font-weight: bold; }}
 .fcfs-notice {{ font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; text-align: center; }}
+.map-highlight {{ background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; text-align: center; margin-bottom: 15px; font-weight: 500; font-size: 14px; }}
 .total-box {{ background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; text-align: center; margin: 10px 0; font-size: 18px; }}
 
 /* Action Buttons */
@@ -100,7 +102,7 @@ button[aria-selected="true"] {{ background-color: #111827 !important; color: whi
 """, unsafe_allow_html=True)
 
 # --- FUNCTIONS ---
-@st.cache_data(ttl=2)
+@st.cache_data(ttl=300) 
 def load_data(gid):
     try:
         res = requests.get(f"{BASE_URL}{gid}", verify=certifi.where(), timeout=10)
@@ -116,8 +118,8 @@ def load_data(gid):
 def get_contacts():
     df = load_data(GIDS["Contacts"])
     if not df.empty and 'Name' in df.columns and 'Phone' in df.columns:
-        return ["Select Contact..."] + list(df['Name']), dict(zip(df['Name'], df['Phone'].astype(str)))
-    return ["Select Contact..."], {}
+        return ["Select Ticket Organizer..."] + list(df['Name']), dict(zip(df['Name'], df['Phone'].astype(str)))
+    return ["Select Ticket Organizer..."], {}
 
 def get_status(df, sec, row, seat):
     target = f"{sec}{row}{seat:02d}"
@@ -174,7 +176,10 @@ st.markdown(f"""
 # --- INQUIRY ---
 with st.expander("📩 Send Seat Inquiry Request", expanded=False):
     st.markdown('<span class="fcfs-notice">⚠️ SEATING IS FIRST-COME, FIRST-SERVED BASED</span>', unsafe_allow_html=True)
-    st.markdown('Choose contact <span class="mandatory">(Mandatory)</span>:', unsafe_allow_html=True)
+    
+    sender_name = st.text_input("Your Name (Sender)", value="")
+    
+    st.markdown('Ticket organizer <span class="mandatory">(Mandatory)</span>:', unsafe_allow_html=True)
     selected_person = st.selectbox("label_hidden_contact", contact_names, label_visibility="collapsed")
     
     col_in1, col_in2 = st.columns(2)
@@ -185,17 +190,22 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=False):
         st.markdown('**Kids** <span class="red-text">(Age 10 & Under)</span>', unsafe_allow_html=True)
         child = st.number_input("Kids_input", 0, 20, 0, label_visibility="collapsed")
     
-    section = st.selectbox("Section", ["Center VIP (A-E)", "Center (F-N)", "Left", "Right"])
-    total = adults * (35 if section == "Center VIP (A-E)" else 25)
-    st.markdown(f'<div class="total-box">Total Amount: <b>${total}</b></div>', unsafe_allow_html=True)
+    # Removed default section selection
+    section_options = ["Select Section...", "Center VIP (A-E)", "Center (F-N)", "Left", "Right"]
+    section = st.selectbox("Section", section_options)
     
-    if selected_person != "Select Contact...":
-        # Extract first name and clean phone
+    if section != "Select Section...":
+        total = adults * (35 if section == "Center VIP (A-E)" else 25)
+        st.markdown(f'<div class="total-box">Total Amount: <b>${total}</b></div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="total-box" style="color:#666;">Select a section to calculate total</div>', unsafe_allow_html=True)
+    
+    # Logic for Active vs Disabled buttons based on both selections
+    if selected_person != "Select Ticket Organizer..." and section != "Select Section...":
         first_name = selected_person.split()[0]
         phone = contact_map[selected_person].replace("+", "").replace("-", "").replace(" ", "")
         
-        # Build message
-        msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {section}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}"
+        msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {section}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}\n\n- From: {sender_name}"
         msg_encoded = urllib.parse.quote(msg_text)
         
         wa_url = f"https://wa.me/{phone}?text={msg_encoded}"
@@ -206,6 +216,9 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=False):
     else:
         st.markdown('<div class="action-button disabled-btn">💬 Send WhatsApp</div>', unsafe_allow_html=True)
         st.markdown('<div class="action-button disabled-btn">📱 Send Text Message</div>', unsafe_allow_html=True)
+
+# --- MAP NOTICE ---
+st.markdown('<div class="map-highlight">The seating map below provides a visual overview of available seats. All seating is first-come, first-served.</div>', unsafe_allow_html=True)
 
 # --- TABS ---
 t1, t2, t3, t4 = st.tabs(["📍 Map", "⬅️ Left", "🏛️ Center", "➡️ Right"])
