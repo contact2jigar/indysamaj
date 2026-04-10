@@ -177,7 +177,8 @@ st.markdown(f"""
 # --- INQUIRY SECTION ---
 with st.expander("📩 Send Seat Inquiry Request", expanded=True):
     
-    sender_name = st.text_input("Your Name (Sender)", value="Jigar")
+    # Removed default value
+    sender_name = st.text_input("Your Name (Sender)", value="")
     
     st.markdown('<span class="mini-label">Ticket organizer (Mandatory):</span>', unsafe_allow_html=True)
     selected_person = st.selectbox("org", contact_names, label_visibility="collapsed")
