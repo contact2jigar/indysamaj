@@ -12,15 +12,8 @@ BASE_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:c
 GIDS = {
     "Center": "1802316304", 
     "Left": "1621742014", 
-    "Right": "1180122255"
-}
-
-# CONTACT LIST
-CONTACT_OPTIONS = ["Select Contact..."] + ["Jigar Patel", "Foram Parikh", "Kinjal Tailor"]
-CONTACT_MAP = {
-    "Jigar Patel": "7174210932",
-    "Foram Parikh": "7659781369",
-    "Kinjal Tailor": "6155409750"
+    "Right": "1180122255",
+    "Contacts": "667747417" 
 }
 
 st.set_page_config(layout="wide", page_title="American Kaka Chale Waka", page_icon="🎬")
@@ -28,10 +21,7 @@ st.set_page_config(layout="wide", page_title="American Kaka Chale Waka", page_ic
 # 🔥 UI + MOBILE FRIENDLY CSS
 st.markdown("""
 <style>
-/* 🔥 Tabs container */
 div[data-baseweb="tab-list"] { gap: 2px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-/* 🔥 Tabs */
 button[role="tab"] {
     background-color: #f1f3f6 !important;
     border-radius: 6px !important;
@@ -43,14 +33,11 @@ button[role="tab"] {
 }
 button[aria-selected="true"] { background-color: #111827 !important; color: white !important; }
 
-/* 📱 iPhone compact adjustments */
 @media (max-width:600px){
     div.stButton > button { font-size: 12px !important; padding: 4px 0px !important; min-height: 30px !important; }
     .seat { width: 26px !important; height: 26px !important; }
-    .fcfs-notice { font-size: 12px !important; }
 }
 
-/* Seat grid */
 .mobile-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .seat-table { border-spacing: 3px; margin: auto; }
 .seat {
@@ -66,10 +53,9 @@ button[aria-selected="true"] { background-color: #111827 !important; color: whit
 .row-label { font-weight: bold; font-size: 11px; padding-right: 5px; text-align: right; min-width: 30px; }
 .section-header { font-weight: bold; font-size: 12px; text-align: center; }
 
-/* Styling for Labels and Notices */
 .mandatory, .red-text { color: #ff0000; font-weight: bold; }
-.fcfs-notice { font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; text-align: center; color: #111827; }
-.stExpander { border-radius: 10px !important; }
+.fcfs-notice { font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; text-align: center; }
+.total-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; text-align: center; margin: 10px 0; font-size: 18px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -79,13 +65,22 @@ def load_data(gid):
         res = requests.get(f"{BASE_URL}{gid}", verify=certifi.where(), timeout=10)
         df = pd.read_csv(io.StringIO(res.text))
         df.columns = df.columns.str.strip().str.replace(" ", "_").str.replace(r"[^\w]", "", regex=True)
-        # Ensure only valid Rows A-N are processed
-        df = df[df['Row'].isin(list("ABCDEFGHIJKLMN"))]
-        if 'Seat_ID' in df.columns:
-            df['m_id'] = df['Seat_ID'].astype(str).str.replace(r'[\s-]', '', regex=True).str.upper()
+        if gid != GIDS["Contacts"]:
+            df = df[df['Row'].isin(list("ABCDEFGHIJKLMN"))]
+            if 'Seat_ID' in df.columns:
+                df['m_id'] = df['Seat_ID'].astype(str).str.replace(r'[\s-]', '', regex=True).str.upper()
         return df
     except:
         return pd.DataFrame()
+
+# 🔥 Pull list as-is from Google Sheet
+def get_contacts():
+    df = load_data(GIDS["Contacts"])
+    if not df.empty and 'Name' in df.columns and 'Phone' in df.columns:
+        # No sorting applied - pulled as listed in sheet
+        contact_dict = dict(zip(df['Name'], df['Phone'].astype(str)))
+        return ["Select Contact..."] + list(contact_dict.keys()), contact_dict
+    return ["Select Contact..."], {}
 
 def get_status(df, sec, row, seat):
     target = f"{sec}{row}{seat:02d}"
@@ -97,7 +92,6 @@ def get_status(df, sec, row, seat):
     return "available"
 
 def get_price(sec, row):
-    # Center VIP Pricing (Rows A-E)
     return 35 if sec == "C" and row in ["A","B","C","D","E"] else 25
 
 def seat_html(status, num, price):
@@ -129,30 +123,43 @@ def render_full(left, center, right):
         html.append(row_html)
     return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
+# --- DATA LOADING ---
+data = {k: load_data(v) for k,v in GIDS.items() if k != "Contacts"}
+contact_names, contact_map = get_contacts()
+
 # --- MAIN APP ---
-data = {k: load_data(v) for k,v in GIDS.items()}
 st.title("🎬 American Kaka Chale Waka")
 
-# 🔥 TOP INQUIRY FORM (CLOSABLE)
-with st.expander("📩 Send Seat Inquiry Request", expanded=True):
+with st.expander("📩 Send Seat Inquiry Request", expanded=False):
     st.markdown('<span class="fcfs-notice">⚠️ SEATING IS FIRST-COME, FIRST-SERVED BASED</span>', unsafe_allow_html=True)
     
     st.markdown('Choose contact <span class="mandatory">(Mandatory)</span>:', unsafe_allow_html=True)
-    selected_person = st.selectbox("label_hidden_contact", CONTACT_OPTIONS, label_visibility="collapsed")
+    selected_person = st.selectbox("label_hidden_contact", contact_names, label_visibility="collapsed")
     
     col_in1, col_in2 = st.columns(2)
     with col_in1:
         st.write("**Adults**")
-        adults = st.number_input("Adults", min_value=1, max_value=20, value=1, label_visibility="collapsed")
+        adults = st.number_input("Adults_input", min_value=1, max_value=20, value=1, label_visibility="collapsed")
     with col_in2:
         st.markdown('**Kids** <span class="red-text">(Age 10 & Under)</span>', unsafe_allow_html=True)
-        child = st.number_input("Kids", min_value=0, max_value=20, value=0, label_visibility="collapsed")
+        child = st.number_input("Kids_input", min_value=0, max_value=20, value=0, label_visibility="collapsed")
     
     section = st.selectbox("Section", ["Center VIP (A-E)", "Center (F-N)", "Left", "Right"])
+
+    unit_price = 35 if section == "Center VIP (A-E)" else 25
+    total_amount = adults * unit_price
+    
+    st.markdown(f'<div class="total-box">Total Amount: <b>${total_amount}</b></div>', unsafe_allow_html=True)
     
     if selected_person != "Select Contact...":
-        target_phone = CONTACT_MAP[selected_person]
-        msg = f"Inquiry for American Kaka:\n- Section: {section}\n- Adults: {adults}\n- Children: {child}"
+        target_phone = contact_map[selected_person]
+        msg = (
+            f"Inquiry for American Kaka:\n"
+            f"- Section: {section}\n"
+            f"- Adults: {adults}\n"
+            f"- Children: {child}\n"
+            f"- Total: ${total_amount}"
+        )
         encoded_msg = urllib.parse.quote(msg)
         sms_url = f"sms:{target_phone}&body={encoded_msg}"
         
@@ -164,11 +171,9 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=True):
             </a>
         """, unsafe_allow_html=True)
     else:
-        # Dummy button for validation
         if st.button("📲 Text Request", use_container_width=True):
-            st.error("Please select a contact from the dropdown above before sending.")
+            st.error("Please select a contact before sending.")
 
-# 🔥 SEATING TABS
 tab_map, tab_l, tab_c, tab_r = st.tabs(["📍 Map", "⬅️ Left", "🏛️ Center", "➡️ Right"])
 
 with tab_map: st.markdown(render_full(data["Left"], data["Center"], data["Right"]), unsafe_allow_html=True)
