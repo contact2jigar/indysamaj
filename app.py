@@ -6,7 +6,7 @@ import certifi
 import urllib.parse
 import base64
 
-# CONFIG
+# --- CONFIGURATION ---
 SHEET_ID = "1cCapuxabacizn8FPo1KZ3ynDPRqjdAbqzmnrcAvk2I8"
 BASE_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&gid="
 
@@ -19,6 +19,7 @@ GIDS = {
 
 st.set_page_config(layout="wide", page_title="American Kaka Chale Waka", page_icon="🎬")
 
+# --- IMAGE CACHING ---
 @st.cache_data
 def get_local_img(file_path):
     try:
@@ -28,12 +29,18 @@ def get_local_img(file_path):
     except:
         return ""
 
-# --- UI + CSS ---
+# --- CSS STYLING ---
 bin_str = get_local_img("AmericanKakaChaleWaka.png")
 bg_style = f"background-image: url('data:image/png;base64,{bin_str}');" if bin_str else "background-color: #111;"
 
 st.markdown(f"""
 <style>
+/* Force columns to stay side-by-side on mobile screens */
+[data-testid="column"] {{
+    min-width: 0px !important;
+    flex: 1 1 0% !important;
+}}
+
 /* Background Image Layer */
 [data-testid="stAppViewContainer"]::before {{
     content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -41,61 +48,55 @@ st.markdown(f"""
     background-repeat: no-repeat; filter: blur(12px) brightness(0.65); z-index: -1;
 }}
 
-/* Banner Styling */
-.custom-banner {{
-    background-color: #333; padding: 15px; border-radius: 12px;
-    display: flex; align-items: center; gap: 20px; margin-bottom: 25px;
-    border: 1px solid rgba(255,255,255,0.1);
-}}
-.banner-logo {{ height: 70px; border-radius: 8px; }}
-.banner-title {{ font-size: 24px; font-weight: bold; color: white; margin: 0; }}
-.banner-subtitle {{ font-size: 18px; color: #f1c40f; margin: 0; }}
-
 /* Glass App Container */
 .block-container {{
-    background-color: rgba(255, 255, 255, 0.88); padding: 2rem !important;
-    border-radius: 20px; margin-top: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    background-color: rgba(255, 255, 255, 0.9); padding: 1.5rem !important;
+    border-radius: 20px; margin-top: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
     backdrop-filter: blur(10px);
 }}
 
-/* Tab & Button Styling */
-div[data-baseweb="tab-list"] {{ gap: 2px; overflow-x: auto; -webkit-overflow-scrolling: touch; }}
-button[role="tab"] {{
-    background-color: #f1f3f6 !important; border-radius: 6px !important;
-    padding: 4px 8px !important; font-size: 11px !important;
-    font-weight: 600 !important; color: #444 !important; white-space: nowrap;
+/* Banner Styling */
+.custom-banner {{
+    background-color: #333; padding: 12px; border-radius: 12px;
+    display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
 }}
-button[aria-selected="true"] {{ background-color: #111827 !important; color: white !important; }}
+.banner-logo {{ height: 55px; border-radius: 8px; }}
+.banner-title {{ font-size: 20px; font-weight: bold; color: white; margin: 0; }}
+.banner-subtitle {{ font-size: 14px; color: #f1c40f; margin: 0; }}
 
-@media (max-width:600px){{
-    .seat {{ width: 26px !important; height: 26px !important; }}
-}}
+/* Mini labels for compact layout */
+.mini-label {{ font-size: 11px; font-weight: bold; margin-bottom: 2px; display: block; color: #444; }}
 
+/* Seating Visuals */
 .mobile-wrapper {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
-.seat-table {{ border-spacing: 3px; margin: auto; }}
+.seat-table {{ border-spacing: 2px; margin: auto; }}
 .seat {{
-    width: 32px; height: 32px; border-radius: 6px; 
+    width: 28px; height: 28px; border-radius: 5px; 
     display: flex; flex-direction: column; justify-content: center;
     text-align: center; color: white; font-weight: bold;
 }}
-.seat-num {{ font-size: 9px; }}
-.seat-price {{ font-size: 7px; }}
+.seat-num {{ font-size: 8px; }}
+.seat-price {{ font-size: 6px; }}
 .available {{ background: #2ecc71; }}
 .sold {{ background: #e74c3c; }}
 
-.row-label {{ font-weight: bold; font-size: 11px; padding-right: 5px; text-align: right; min-width: 30px; }}
-.section-header {{ font-weight: bold; font-size: 12px; text-align: center; }}
-.mandatory, .red-text {{ color: #ff0000; font-weight: bold; }}
-.fcfs-notice {{ font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; text-align: center; }}
-.map-highlight {{ background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; text-align: center; margin-bottom: 15px; font-weight: 500; font-size: 14px; }}
-.total-box {{ background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; text-align: center; margin: 10px 0; font-size: 18px; }}
+.row-label {{ font-weight: bold; font-size: 10px; padding-right: 4px; text-align: right; }}
+.section-header {{ font-weight: bold; font-size: 11px; text-align: center; }}
 
-/* Action Buttons */
+/* UI Elements */
+.payment-box {{ background-color: #d4edda; color: #155724; padding: 10px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 10px 0; font-size: 12px; }}
+.total-box-compact {{ 
+    background: #111827; color: white; padding: 8px; border-radius: 8px; 
+    text-align: center; font-size: 16px; font-weight: bold; height: 42px; 
+    display: flex; align-items: center; justify-content: center;
+}}
+
 .action-button {{
     display: block; padding: 12px; border-radius: 8px; text-align: center;
-    font-weight: bold; text-decoration: none; margin-top: 10px; color: white !important;
+    font-weight: bold; text-decoration: none; margin-top: 10px; color: white !important; font-size: 14px;
 }}
-.disabled-btn {{ background-color: #bdc3c7; cursor: not-allowed; pointer-events: none; }}
+.disabled-btn {{ background-color: #bdc3c7; cursor: not-allowed; }}
 .wa-btn {{ background-color: #25D366; }}
 .sms-btn {{ background-color: #007AFF; }}
 </style>
@@ -147,7 +148,7 @@ def render_section(section, df):
 
 def render_full(left, center, right):
     rows = list("ABCDEFGHIJKLMN")
-    html = ['<tr><td></td><td colspan="3" class="section-header">⬅️ Left</td><td></td><td colspan="18" class="section-header">🏛️ Center</td><td></td><td colspan="3" class="section-header">➡️ Right</td></tr>']
+    html = ['<tr><td></td><td colspan="3" class="section-header">⬅️ L</td><td></td><td colspan="18" class="section-header">🏛️ C</td><td></td><td colspan="3" class="section-header">➡️ R</td></tr>']
     for r in rows:
         row_html = f'<tr><td class="row-label">{r}</td>'
         for s in range(1,4): row_html += f'<td>{seat_html(get_status(left,"L",r,s),s,get_price("L",r))}</td>'
@@ -173,34 +174,46 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- INQUIRY ---
-with st.expander("📩 Send Seat Inquiry Request", expanded=False):
-    st.markdown('<span class="fcfs-notice">⚠️ SEATING IS FIRST-COME, FIRST-SERVED BASED</span>', unsafe_allow_html=True)
+# --- INQUIRY SECTION ---
+with st.expander("📩 Send Seat Inquiry Request", expanded=True):
     
-    sender_name = st.text_input("Your Name (Sender)", value="")
+    sender_name = st.text_input("Your Name (Sender)", value="Jigar")
     
-    st.markdown('Ticket organizer <span class="mandatory">(Mandatory)</span>:', unsafe_allow_html=True)
-    selected_person = st.selectbox("label_hidden_contact", contact_names, label_visibility="collapsed")
+    st.markdown('<span class="mini-label">Ticket organizer (Mandatory):</span>', unsafe_allow_html=True)
+    selected_person = st.selectbox("org", contact_names, label_visibility="collapsed")
     
-    col_in1, col_in2 = st.columns(2)
-    with col_in1:
-        st.write("**Adults**")
-        adults = st.number_input("Adults_input", 1, 20, 1, label_visibility="collapsed")
-    with col_in2:
-        st.markdown('**Kids** <span class="red-text">(Age 10 & Under)</span>', unsafe_allow_html=True)
-        child = st.number_input("Kids_input", 0, 20, 0, label_visibility="collapsed")
+    # ROW 1: Adults and Kids side-by-side
+    col_ak1, col_ak2 = st.columns(2)
+    with col_ak1:
+        st.markdown('<span class="mini-label">Adults</span>', unsafe_allow_html=True)
+        adults = st.number_input("A", 1, 20, 1, label_visibility="collapsed")
+    with col_ak2:
+        st.markdown('<span class="mini-label">Kids (Age ≤10)</span>', unsafe_allow_html=True)
+        child = st.number_input("K", 0, 20, 0, label_visibility="collapsed")
     
-    # Removed default section selection
-    section_options = ["Select Section...", "Center VIP (A-E)", "Center (F-N)", "Left", "Right"]
-    section = st.selectbox("Section", section_options)
-    
+    # ROW 2: Section and Total side-by-side
+    col_st1, col_st2 = st.columns([2, 1])
+    with col_st1:
+        st.markdown('<span class="mini-label">Section</span>', unsafe_allow_html=True)
+        section = st.selectbox("S", ["Select Section...", "Center VIP (A-E)", "Center (F-N)", "Left", "Right"], label_visibility="collapsed")
+    with col_st2:
+        st.markdown('<span class="mini-label">Total</span>', unsafe_allow_html=True)
+        if section != "Select Section...":
+            total = adults * (35 if section == "Center VIP (A-E)" else 25)
+            st.markdown(f'<div class="total-box-compact">${total}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="total-box-compact" style="font-size:12px; color:#666;">--</div>', unsafe_allow_html=True)
+
+    # Payment Instructions
     if section != "Select Section...":
-        total = adults * (35 if section == "Center VIP (A-E)" else 25)
-        st.markdown(f'<div class="total-box">Total Amount: <b>${total}</b></div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="total-box" style="color:#666;">Select a section to calculate total</div>', unsafe_allow_html=True)
-    
-    # Logic for Active vs Disabled buttons based on both selections
+        st.markdown(
+            '<div class="payment-box">'
+            '<b>💳 Payment:</b> Please Zelle the total to the selected organizer’s phone number after sending request.'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+    # Action Buttons
     if selected_person != "Select Ticket Organizer..." and section != "Select Section...":
         first_name = selected_person.split()[0]
         phone = contact_map[selected_person].replace("+", "").replace("-", "").replace(" ", "")
@@ -208,19 +221,14 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=False):
         msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {section}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}\n\n- From: {sender_name}"
         msg_encoded = urllib.parse.quote(msg_text)
         
-        wa_url = f"https://wa.me/{phone}?text={msg_encoded}"
-        sms_url = f"sms:{phone};?&body={msg_encoded}"
-        
-        st.markdown(f'<a href="{wa_url}" target="_blank" class="action-button wa-btn">💬 Send WhatsApp ({first_name})</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="{sms_url}" class="action-button sms-btn">📱 Send Text ({first_name})</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://wa.me/{phone}?text={msg_encoded}" target="_blank" class="action-button wa-btn">💬 Send WhatsApp ({first_name})</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="sms:{phone};?&body={msg_encoded}" class="action-button sms-btn">📱 Send Text ({first_name})</a>', unsafe_allow_html=True)
     else:
-        st.markdown('<div class="action-button disabled-btn">💬 Send WhatsApp</div>', unsafe_allow_html=True)
-        st.markdown('<div class="action-button disabled-btn">📱 Send Text Message</div>', unsafe_allow_html=True)
+        st.markdown('<div class="action-button disabled-btn">Select Organizer & Section</div>', unsafe_allow_html=True)
 
-# --- MAP NOTICE ---
-st.markdown('<div class="map-highlight">The seating map below provides a visual overview of available seats. All seating is first-come, first-served.</div>', unsafe_allow_html=True)
+# --- MAP SECTION ---
+st.markdown('<div style="background:#fff3cd; padding:8px; border-radius:8px; font-size:12px; text-align:center; margin-bottom:10px; color:#856404; font-weight:500;">The map below shows available seats. First-come, first-served.</div>', unsafe_allow_html=True)
 
-# --- TABS ---
 t1, t2, t3, t4 = st.tabs(["📍 Map", "⬅️ Left", "🏛️ Center", "➡️ Right"])
 with t1: st.markdown(render_full(data["Left"], data["Center"], data["Right"]), unsafe_allow_html=True)
 with t2: st.markdown(render_section("Left", data["Left"]), unsafe_allow_html=True)
