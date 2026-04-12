@@ -35,27 +35,23 @@ bg_style = f"background-image: url('data:image/png;base64,{bin_str}');" if bin_s
 
 st.markdown(f"""
 <style>
-/* Force columns to stay side-by-side on mobile screens */
 [data-testid="column"] {{
     min-width: 0px !important;
     flex: 1 1 0% !important;
 }}
 
-/* Background Image Layer */
 [data-testid="stAppViewContainer"]::before {{
     content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     {bg_style} background-size: cover; background-position: center;
     background-repeat: no-repeat; filter: blur(12px) brightness(0.65); z-index: -1;
 }}
 
-/* Glass App Container */
 .block-container {{
     background-color: rgba(255, 255, 255, 0.9); padding: 1.5rem !important;
     border-radius: 20px; margin-top: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
     backdrop-filter: blur(10px);
 }}
 
-/* Banner Styling */
 .custom-banner {{
     background-color: #333; padding: 12px; border-radius: 12px;
     display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
@@ -65,10 +61,8 @@ st.markdown(f"""
 .banner-title {{ font-size: 20px; font-weight: bold; color: white; margin: 0; }}
 .banner-subtitle {{ font-size: 14px; color: #f1c40f; margin: 0; }}
 
-/* Mini labels for compact layout */
 .mini-label {{ font-size: 11px; font-weight: bold; margin-bottom: 2px; display: block; color: #444; }}
 
-/* Seating Visuals */
 .mobile-wrapper {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 .seat-table {{ border-spacing: 2px; margin: auto; }}
 .seat {{
@@ -84,7 +78,6 @@ st.markdown(f"""
 .row-label {{ font-weight: bold; font-size: 10px; padding-right: 4px; text-align: right; }}
 .section-header {{ font-weight: bold; font-size: 11px; text-align: center; }}
 
-/* UI Elements */
 .payment-box {{ background-color: #d4edda; color: #155724; padding: 10px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 10px 0; font-size: 12px; }}
 .total-box-compact {{ 
     background: #111827; color: white; padding: 8px; border-radius: 8px; 
@@ -131,7 +124,8 @@ def get_status(df, sec, row, seat):
     return "available"
 
 def get_price(sec, row):
-    return 35 if sec == "C" and row in ["A","B","C","D","E"] else 25
+    # Updated prices: 45 for VIP, 35 for Standard
+    return 45 if sec == "C" and row in ["A","B","C","D","E"] else 35
 
 def seat_html(status, num, price):
     return f'<div class="seat {status}"><div class="seat-num">{num}</div><div class="seat-price">${price}</div></div>'
@@ -177,36 +171,44 @@ st.markdown(f"""
 # --- INQUIRY SECTION ---
 with st.expander("📩 Send Seat Inquiry Request", expanded=True):
     
-    # Removed default value
     sender_name = st.text_input("Your Name (Sender)", value="")
     
-    st.markdown('<span class="mini-label">Ticket organizer (Mandatory):</span>', unsafe_allow_html=True)
+    # Updated Label: Mandatory in Red and Bold
+    st.markdown('<span class="mini-label">Ticket organizer (<span style="color:red; font-weight:bold;">Mandatory</span>):</span>', unsafe_allow_html=True)
     selected_person = st.selectbox("org", contact_names, label_visibility="collapsed")
     
-    # ROW 1: Adults and Kids side-by-side
     col_ak1, col_ak2 = st.columns(2)
     with col_ak1:
         st.markdown('<span class="mini-label">Adults</span>', unsafe_allow_html=True)
         adults = st.number_input("A", 1, 20, 1, label_visibility="collapsed")
     with col_ak2:
-        st.markdown('<span class="mini-label">Kids (Age ≤10)</span>', unsafe_allow_html=True)
+        # Updated Label: Kids Age Free in Red and Bold
+        st.markdown('<span class="mini-label">Kids (<span style="color:red; font-weight:bold;">Age ≤10 Free</span>)</span>', unsafe_allow_html=True)
         child = st.number_input("K", 0, 20, 0, label_visibility="collapsed")
     
-    # ROW 2: Section and Total side-by-side
     col_st1, col_st2 = st.columns([2, 1])
     with col_st1:
         st.markdown('<span class="mini-label">Section</span>', unsafe_allow_html=True)
-        section = st.selectbox("S", ["Select Section...", "Center VIP (A-E)", "Center (F-N)", "Left", "Right"], label_visibility="collapsed")
+        # Updated Dropdown with 45 and 35 prices
+        sec_options = {
+            "Select Section...": 0,
+            "Center VIP (A-E) ($45)": 45,
+            "Center (F-N) ($35)": 35,
+            "Left ($35)": 35,
+            "Right ($35)": 35
+        }
+        section_label = st.selectbox("S", list(sec_options.keys()), label_visibility="collapsed")
+        price_per_adult = sec_options[section_label]
+        
     with col_st2:
         st.markdown('<span class="mini-label">Total</span>', unsafe_allow_html=True)
-        if section != "Select Section...":
-            total = adults * (35 if section == "Center VIP (A-E)" else 25)
+        if section_label != "Select Section...":
+            total = adults * price_per_adult
             st.markdown(f'<div class="total-box-compact">${total}</div>', unsafe_allow_html=True)
         else:
             st.markdown('<div class="total-box-compact" style="font-size:12px; color:#666;">--</div>', unsafe_allow_html=True)
 
-    # Payment Instructions
-    if section != "Select Section...":
+    if section_label != "Select Section...":
         st.markdown(
             '<div class="payment-box">'
             '<b>💳 Payment:</b> Please Zelle the total to the selected organizer’s phone number after sending request.'
@@ -214,12 +216,12 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=True):
             unsafe_allow_html=True
         )
 
-    # Action Buttons
-    if selected_person != "Select Ticket Organizer..." and section != "Select Section...":
+    if selected_person != "Select Ticket Organizer..." and section_label != "Select Section...":
         first_name = selected_person.split()[0]
         phone = contact_map[selected_person].replace("+", "").replace("-", "").replace(" ", "")
         
-        msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {section}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}\n\n- From: {sender_name}"
+        clean_section = section_label.split(" ($")[0]
+        msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {clean_section}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}\n\n- From: {sender_name}"
         msg_encoded = urllib.parse.quote(msg_text)
         
         st.markdown(f'<a href="https://wa.me/{phone}?text={msg_encoded}" target="_blank" class="action-button wa-btn">💬 Send WhatsApp ({first_name})</a>', unsafe_allow_html=True)
