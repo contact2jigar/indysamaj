@@ -89,7 +89,7 @@ st.markdown(f"""
     display: block; padding: 12px; border-radius: 8px; text-align: center;
     font-weight: bold; text-decoration: none; margin-top: 10px; color: white !important; font-size: 14px;
 }}
-.disabled-btn {{ background-color: #bdc3c7; cursor: not-allowed; }}
+.disabled-btn {{ background-color: #bdc3c7; cursor: not-allowed; pointer-events: none; }}
 .wa-btn {{ background-color: #25D366; }}
 .sms-btn {{ background-color: #007AFF; }}
 </style>
@@ -124,7 +124,6 @@ def get_status(df, sec, row, seat):
     return "available"
 
 def get_price(sec, row):
-    # Updated prices: 45 for VIP, 35 for Standard
     return 45 if sec == "C" and row in ["A","B","C","D","E"] else 35
 
 def seat_html(status, num, price):
@@ -173,7 +172,6 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=True):
     
     sender_name = st.text_input("Your Name (Sender)", value="")
     
-    # Updated Label: Mandatory in Red and Bold
     st.markdown('<span class="mini-label">Ticket organizer (<span style="color:red; font-weight:bold;">Mandatory</span>):</span>', unsafe_allow_html=True)
     selected_person = st.selectbox("org", contact_names, label_visibility="collapsed")
     
@@ -182,14 +180,12 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=True):
         st.markdown('<span class="mini-label">Adults</span>', unsafe_allow_html=True)
         adults = st.number_input("A", 1, 20, 1, label_visibility="collapsed")
     with col_ak2:
-        # Updated Label: Kids Age Free in Red and Bold
         st.markdown('<span class="mini-label">Kids (<span style="color:red; font-weight:bold;">Age ≤10 Free</span>)</span>', unsafe_allow_html=True)
         child = st.number_input("K", 0, 20, 0, label_visibility="collapsed")
     
     col_st1, col_st2 = st.columns([2, 1])
     with col_st1:
         st.markdown('<span class="mini-label">Section</span>', unsafe_allow_html=True)
-        # Updated Dropdown with 45 and 35 prices
         sec_options = {
             "Select Section...": 0,
             "Center VIP (A-E) ($45)": 45,
@@ -206,6 +202,7 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=True):
             total = adults * price_per_adult
             st.markdown(f'<div class="total-box-compact">${total}</div>', unsafe_allow_html=True)
         else:
+            total = 0
             st.markdown('<div class="total-box-compact" style="font-size:12px; color:#666;">--</div>', unsafe_allow_html=True)
 
     if section_label != "Select Section...":
@@ -216,18 +213,32 @@ with st.expander("📩 Send Seat Inquiry Request", expanded=True):
             unsafe_allow_html=True
         )
 
-    if selected_person != "Select Ticket Organizer..." and section_label != "Select Section...":
+    # --- DYNAMIC BUTTON LOGIC ---
+    is_ready = selected_person != "Select Ticket Organizer..." and section_label != "Select Section..."
+    
+    if is_ready:
         first_name = selected_person.split()[0]
         phone = contact_map[selected_person].replace("+", "").replace("-", "").replace(" ", "")
-        
         clean_section = section_label.split(" ($")[0]
         msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {clean_section}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}\n\n- From: {sender_name}"
         msg_encoded = urllib.parse.quote(msg_text)
         
-        st.markdown(f'<a href="https://wa.me/{phone}?text={msg_encoded}" target="_blank" class="action-button wa-btn">💬 Send WhatsApp ({first_name})</a>', unsafe_allow_html=True)
-        st.markdown(f'<a href="sms:{phone};?&body={msg_encoded}" class="action-button sms-btn">📱 Send Text ({first_name})</a>', unsafe_allow_html=True)
+        wa_link = f"https://wa.me/{phone}?text={msg_encoded}"
+        sms_link = f"sms:{phone};?&body={msg_encoded}"
+        wa_label = f"💬 Send WhatsApp ({first_name})"
+        sms_label = f"📱 Send Text ({first_name})"
+        wa_style = "wa-btn"
+        sms_style = "sms-btn"
     else:
-        st.markdown('<div class="action-button disabled-btn">Select Organizer & Section</div>', unsafe_allow_html=True)
+        wa_link = "#"
+        sms_link = "#"
+        wa_label = "💬 Send WhatsApp"
+        sms_label = "📱 Send Text"
+        wa_style = "disabled-btn"
+        sms_style = "disabled-btn"
+
+    st.markdown(f'<a href="{wa_link}" target="_blank" class="action-button {wa_style}">{wa_label}</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="{sms_link}" class="action-button {sms_style}">{sms_label}</a>', unsafe_allow_html=True)
 
 # --- MAP SECTION ---
 st.markdown('<div style="background:#fff3cd; padding:8px; border-radius:8px; font-size:12px; text-align:center; margin-bottom:10px; color:#856404; font-weight:500;">The map below shows available seats. First-come, first-served.</div>', unsafe_allow_html=True)
