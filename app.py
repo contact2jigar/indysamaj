@@ -30,8 +30,8 @@ def get_local_img(file_path):
         return ""
 
 # --- CSS STYLING ---
-bin_str = get_local_img("AmericanKakaChaleWaka.png")
-bg_style = f"background-image: url('data:image/png;base64,{bin_str}');" if bin_str else "background-color: #111;"
+bin_str = get_local_img("AmericanKakaChaleWaka.jpeg")
+bg_style = f"background-image: url('data:image/jpeg;base64,{bin_str}');" if bin_str else "background-color: #111;"
 
 st.markdown(f"""
 <style>
