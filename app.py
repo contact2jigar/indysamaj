@@ -17,7 +17,7 @@ GIDS = {
     "Contacts": "667747417" 
 }
 
-st.set_page_config(layout="wide", page_title="American Kaka Chale Waka", page_icon="🎬")
+st.set_page_config(layout="wide", page_title="American Desi Kaka Chale Vanka", page_icon="🎬")
 
 # --- IMAGE CACHING ---
 @st.cache_data
@@ -161,7 +161,7 @@ st.markdown(f"""
 <div class="custom-banner">
     <img src="data:image/png;base64,{bin_str}" class="banner-logo">
     <div class="banner-text">
-        <p class="banner-title">American Kaka Chale Waka</p>
+        <p class="banner-title">American Desi Kaka Chale Vanka</p>
         <p class="banner-subtitle">અમેરિકન કાકા ચાલે વાકા</p>
     </div>
 </div>
