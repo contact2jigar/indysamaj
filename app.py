@@ -130,25 +130,28 @@ def seat_html(status, num, price):
     return f'<div class="seat {status}"><div class="seat-num">{num}</div><div class="seat-price">${price}</div></div>'
 
 def render_section(section, df):
-    rows, seats = list("ABCDEFGHIJKLMN"), (18 if section == "Center" else 3)
+    # Change seats logic to allow 4 for Left/Right
+    rows, seats = list("ABCDEFGHIJKLMN"), (18 if section == "Center" else 4)
     html = [f'<tr><td></td><td colspan="{seats}" class="section-header">{section}</td></tr>']
     for r in rows:
         row_html = f'<tr><td class="row-label">{r}</td>'
-        for s in range(1, seats+1):
-            row_html += f'<td>{seat_html(get_status(df,section[0],r,s),s,get_price(section[0],r))}</td>'
+        for s in range(1, seats + 1):
+            row_html += f'<td>{seat_html(get_status(df, section[0], r, s), s, get_price(section[0], r))}</td>'
         html.append(row_html + '</tr>')
     return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
 def render_full(left, center, right):
     rows = list("ABCDEFGHIJKLMN")
-    html = ['<tr><td></td><td colspan="3" class="section-header">⬅️ L</td><td></td><td colspan="18" class="section-header">🏛️ C</td><td></td><td colspan="3" class="section-header">➡️ R</td></tr>']
+    # Updated colspan to 4 for Left and Right headers
+    html = ['<tr><td></td><td colspan="4" class="section-header">⬅️ L</td><td></td><td colspan="18" class="section-header">🏛️ C</td><td></td><td colspan="4" class="section-header">➡️ R</td></tr>']
     for r in rows:
         row_html = f'<tr><td class="row-label">{r}</td>'
-        for s in range(1,4): row_html += f'<td>{seat_html(get_status(left,"L",r,s),s,get_price("L",r))}</td>'
+        # Range(1, 5) ensures seats 1, 2, 3, and 4 are rendered
+        for s in range(1, 5): row_html += f'<td>{seat_html(get_status(left,"L",r,s),s,get_price("L",r))}</td>'
         row_html += '<td></td>'
-        for s in range(1,19): row_html += f'<td>{seat_html(get_status(center,"C",r,s),s,get_price("C",r))}</td>'
+        for s in range(1, 19): row_html += f'<td>{seat_html(get_status(center,"C",r,s),s,get_price("C",r))}</td>'
         row_html += '<td></td>'
-        for s in range(1,4): row_html += f'<td>{seat_html(get_status(right,"R",r,s),s,get_price("R",r))}</td>'
+        for s in range(1, 5): row_html += f'<td>{seat_html(get_status(right,"R",r,s),s,get_price("R",r))}</td>'
         html.append(row_html + '</tr>')
     return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
@@ -162,7 +165,7 @@ st.markdown(f"""
     <img src="data:image/png;base64,{bin_str}" class="banner-logo">
     <div class="banner-text">
         <p class="banner-title">American Desi Kaka Chale Vanka</p>
-        <p class="banner-subtitle">અમેરિકન કાકા ચાલે વાકા</p>
+        <p class="banner-subtitle">અમેરિકન દેસી કાકા ચાલે વાંકા</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
