@@ -130,27 +130,32 @@ def seat_html(status, num, price):
     return f'<div class="seat {status}"><div class="seat-num">{num}</div><div class="seat-price">${price}</div></div>'
 
 def render_section(section, df):
-    # Change seats logic to allow 4 for Left/Right
     rows, seats = list("ABCDEFGHIJKLMN"), (18 if section == "Center" else 4)
-    html = [f'<tr><td></td><td colspan="{seats}" class="section-header">{section}</td></tr>']
+    html = [f'<tr><td></td><td colspan="{seats + (1 if section == "Center" else 0)}" class="section-header">{section}</td></tr>']
     for r in rows:
         row_html = f'<tr><td class="row-label">{r}</td>'
         for s in range(1, seats + 1):
             row_html += f'<td>{seat_html(get_status(df, section[0], r, s), s, get_price(section[0], r))}</td>'
+            # Add a 20px spacer after seat 9 in the Center section
+            if section == "Center" and s == 9:
+                row_html += '<td style="width: 20px;"></td>'
         html.append(row_html + '</tr>')
     return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
 def render_full(left, center, right):
     rows = list("ABCDEFGHIJKLMN")
-    # Updated colspan to 4 for Left and Right headers
-    html = ['<tr><td></td><td colspan="4" class="section-header">⬅️ L</td><td></td><td colspan="18" class="section-header">🏛️ C</td><td></td><td colspan="4" class="section-header">➡️ R</td></tr>']
+    # Updated colspan to account for the new spacer cell in the center (+1)
+    html = ['<tr><td></td><td colspan="4" class="section-header">⬅️ L</td><td></td><td colspan="19" class="section-header">🏛️ C</td><td></td><td colspan="4" class="section-header">➡️ R</td></tr>']
     for r in rows:
         row_html = f'<tr><td class="row-label">{r}</td>'
-        # Range(1, 5) ensures seats 1, 2, 3, and 4 are rendered
         for s in range(1, 5): row_html += f'<td>{seat_html(get_status(left,"L",r,s),s,get_price("L",r))}</td>'
-        row_html += '<td></td>'
-        for s in range(1, 19): row_html += f'<td>{seat_html(get_status(center,"C",r,s),s,get_price("C",r))}</td>'
-        row_html += '<td></td>'
+        row_html += '<td></td>' # Space between Left and Center
+        for s in range(1, 19): 
+            row_html += f'<td>{seat_html(get_status(center,"C",r,s),s,get_price("C",r))}</td>'
+            # Add the aisle gap after seat 9 in the center portion of the full map
+            if s == 9:
+                row_html += '<td style="width: 20px;"></td>'
+        row_html += '<td></td>' # Space between Center and Right
         for s in range(1, 5): row_html += f'<td>{seat_html(get_status(right,"R",r,s),s,get_price("R",r))}</td>'
         html.append(row_html + '</tr>')
     return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
