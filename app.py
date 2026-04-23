@@ -8,7 +8,7 @@ import base64
 
 # --- CONFIGURATION ---
 SHEET_ID = "1cCapuxabacizn8FPo1KZ3ynDPRqjdAbqzmnrcAvk2I8"
-BASE_URL = f"https://docs.google.com/spreadsheets/d/{{SHEET_ID}}/gviz/tq?tqx=out:csv&gid="
+BASE_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&gid="
 
 GIDS = {
     "Center": "1802316304", 
@@ -17,289 +17,247 @@ GIDS = {
     "Contacts": "667747417" 
 }
 
-# --- PAGE SETUP ---
 st.set_page_config(layout="wide", page_title="American Desi Kaka Chale Vanka", page_icon="🎬")
 
-# Helper to load local image for CSS background
+# --- IMAGE CACHING ---
+@st.cache_data
 def get_local_img(file_path):
     try:
         with open(file_path, "rb") as f:
             data = f.read()
         return base64.b64encode(data).decode()
     except:
-        return None
+        return ""
 
-img_base64 = get_local_img("AmericanKakaChaleWaka.jpeg")
-bg_style = f"""
-    background-image: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url("data:image/jpeg;base64,{img_base64}");
-    background-size: cover;
-    background-position: center;
-""" if img_base64 else "background-color: #f8f9fa;"
+# --- CSS STYLING ---
+bin_str = get_local_img("AmericanKakaChaleWaka.jpeg")
+bg_style = f"background-image: url('data:image/jpeg;base64,{bin_str}');" if bin_str else "background-color: #111;"
 
-# --- UI STYLING ---
 st.markdown(f"""
 <style>
-    /* General Layout */
-    .block-container {{ padding-top: 1rem !important; }}
-    [data-testid="stVerticalBlock"] > div {{ gap: 0px !important; }}
-    
-    /* Inquiry Container with Background Image */
-    div[data-testid="stExpander"] {{
-        {bg_style}
-        border-radius: 12px !important;
-        border: 1px solid #ddd !important;
-    }}
-    
-    /* Frosty Glass Overlay */
-    [data-testid="stExpanderDetails"] {{
-        background-color: rgba(0, 0, 0, 0.5) !important;
-        backdrop-filter: blur(6px);
-        padding: 20px !important;
-        border-radius: 0 0 12px 12px !important;
-    }}
+[data-testid="column"] {{
+    min-width: 0px !important;
+    flex: 1 1 0% !important;
+}}
 
-    /* Labels */
-    .bold-label {{ 
-        font-size: 14px; 
-        font-weight: 800 !important; 
-        color: #FFFFFF !important; 
-        margin-bottom: 5px; 
-        display: block; 
-        text-shadow: 1px 1px 3px #000;
-    }}
+[data-testid="stAppViewContainer"]::before {{
+    content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    {bg_style} background-size: cover; background-position: center;
+    background-repeat: no-repeat; filter: blur(12px) brightness(0.65); z-index: -1;
+}}
 
-    /* Input Fields */
-    div[data-testid="stTextInput"] input, 
-    div[data-testid="stSelectbox"] div[data-baseweb="select"],
-    div[data-testid="stNumberInput"] input {{
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        color: #111 !important;
-        border: 1px solid #ccc !important;
-    }}
+.block-container {{
+    background-color: rgba(255, 255, 255, 0.9); padding: 1.5rem !important;
+    border-radius: 20px; margin-top: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+}}
 
-    /* Toast Notifications */
-    [data-testid="stToast"] {{
-        background-color: #1e1e1e !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-        border-radius: 8px !important;
-    }}
+.custom-banner {{
+    background-color: #333; padding: 12px; border-radius: 12px;
+    display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+}}
+.banner-logo {{ height: 55px; border-radius: 8px; }}
+.banner-title {{ font-size: 20px; font-weight: bold; color: white; margin: 0; }}
+.banner-subtitle {{ font-size: 14px; color: #f1c40f; margin: 0; }}
 
-    /* Action Buttons */
-    .action-button {{
-        display: block; 
-        text-align: center; 
-        padding: 12px; 
-        border-radius: 8px;
-        text-decoration: none; 
-        font-weight: bold; 
-        margin-top: 10px; 
-        color: white !important;
-    }}
-    .wa-btn {{ background-color: #25D366; box-shadow: 0 3px 0 #128C7E; }}
-    .sms-btn {{ background-color: #007AFF; box-shadow: 0 3px 0 #0051a8; }}
-    .disabled-btn {{ background-color: #bdc3c7; color: white !important; cursor: not-allowed; pointer-events: none; }}
+.mini-label {{ font-size: 11px; font-weight: bold; margin-bottom: 2px; display: block; color: #444; }}
 
-    /* 3D Seat Styling */
-    div.stButton > button {{
-        border-radius: 6px !important;
-        width: 42px !important;
-        height: 42px !important;
-        padding: 0 !important;
-        line-height: 1.1 !important;
-        margin: 2px !important;
-        font-size: 10px !important;
-        font-weight: bold !important;
-        white-space: pre-wrap !important;
-        border: 1px solid rgba(0,0,0,0.2) !important;
-        box-shadow: 0 3px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3) !important;
-        transition: all 0.1s ease !important;
-    }}
-    div.stButton > button[kind="primary"] {{ background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important; color: white !important; }}
-    div.stButton > button[kind="secondary"] {{ background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%) !important; color: white !important; }}
+.mobile-wrapper {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
+.seat-table {{ border-spacing: 2px; margin: auto; }}
+.seat {{
+    width: 28px; height: 28px; border-radius: 5px; 
+    display: flex; flex-direction: column; justify-content: center;
+    text-align: center; color: white; font-weight: bold;
+}}
+.seat-num {{ font-size: 8px; }}
+.seat-price {{ font-size: 6px; }}
+.available {{ background: #2ecc71; }}
+.sold {{ background: #e74c3c; }}
 
-    .row-label {{ font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; height: 44px; }}
+.row-label {{ font-weight: bold; font-size: 10px; padding-right: 4px; text-align: right; }}
+.section-header {{ font-weight: bold; font-size: 11px; text-align: center; }}
 
-    /* --- SLIM TITLE BANNER FIX --- */
-    .title-banner {{
-        background-image: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url("data:image/jpeg;base64,{img_base64}");
-        background-size: cover;
-        background-position: center;
-        padding: 10px !important; 
-        border-radius: 12px;
-        text-align: center;
-        margin-bottom: 10px !important;
-        border: 1px solid #444;
-    }}
-    .title-banner h1 {{
-        margin: 0 !important;
-        padding: 0 !important;
-        line-height: 1.0 !important;
-        font-weight: 800 !important;
-        text-shadow: 2px 2px 8px #000000 !important;
-    }}
+.payment-box {{ background-color: #d4edda; color: #155724; padding: 10px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 10px 0; font-size: 12px; }}
+.total-box-compact {{ 
+    background: #111827; color: white; padding: 8px; border-radius: 8px; 
+    text-align: center; font-size: 16px; font-weight: bold; height: 42px; 
+    display: flex; align-items: center; justify-content: center;
+}}
 
-    /* --- MOBILE HORIZONTAL SCROLL FIX --- */
-    [data-testid="stHorizontalBlock"] {{
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        width: 100% !important;
-        gap: 0px !important;
-        padding-bottom: 5px !important;
-    }}
-    [data-testid="column"] {{
-        flex: 0 0 auto !important;
-        width: auto !important;
-        min-width: min-content !important;
-    }}
-    /* Clean scrollbar for mobile */
-    [data-testid="stHorizontalBlock"]::-webkit-scrollbar {{
-        height: 4px;
-    }}
-    [data-testid="stHorizontalBlock"]::-webkit-scrollbar-thumb {{
-        background: #888;
-        border-radius: 10px;
-    }}
-
+.action-button {{
+    display: block; padding: 12px; border-radius: 8px; text-align: center;
+    font-weight: bold; text-decoration: none; margin-top: 10px; color: white !important; font-size: 14px;
+}}
+.disabled-btn {{ background-color: #bdc3c7; cursor: not-allowed; pointer-events: none; }}
+.wa-btn {{ background-color: #25D366; }}
+.sms-btn {{ background-color: #007AFF; }}
 </style>
 """, unsafe_allow_html=True)
 
-# --- DATA ENGINE ---
+# --- FUNCTIONS ---
 @st.cache_data(ttl=300) 
 def load_data(gid):
     try:
-        res = requests.get(f"{BASE_URL.format(SHEET_ID=SHEET_ID)}{gid}", verify=certifi.where(), timeout=10)
+        res = requests.get(f"{BASE_URL}{gid}", verify=certifi.where(), timeout=10)
         df = pd.read_csv(io.StringIO(res.text))
         df.columns = df.columns.str.strip().str.replace(" ", "_").str.replace(r"[^\w]", "", regex=True)
-        if gid != GIDS["Contacts"] and 'Seat_ID' in df.columns:
-            df['m_id'] = df['Seat_ID'].astype(str).str.replace(r'[\s-]', '', regex=True).str.upper()
+        if gid != GIDS["Contacts"]:
+            df = df[df['Row'].isin(list("ABCDEFGHIJKLMN"))]
+            if 'Seat_ID' in df.columns:
+                df['m_id'] = df['Seat_ID'].astype(str).str.replace(r'[\s-]', '', regex=True).str.upper()
         return df
     except: return pd.DataFrame()
 
 def get_contacts():
     df = load_data(GIDS["Contacts"])
     if not df.empty and 'Name' in df.columns and 'Phone' in df.columns:
-        df = df.dropna(subset=['Name'])
-        df = df[df['Name'].astype(str).str.len() > 3]
-        names = ["Select Ticket Organizer..."] + list(df['Name'])
-        mapping = dict(zip(df['Name'], df['Phone'].astype(str)))
-        return names, mapping
+        return ["Select Ticket Organizer..."] + list(df['Name']), dict(zip(df['Name'], df['Phone'].astype(str)))
     return ["Select Ticket Organizer..."], {}
 
+def get_status(df, sec, row, seat):
+    target = f"{sec}{row}{seat:02d}"
+    if not df.empty and 'm_id' in df.columns:
+        match = df[df['m_id'] == target]
+        if not match.empty:
+            return "sold" if "sold" in str(match.iloc[0].get("Seat_Status","")).lower() else "available"
+    return "available"
+
 def get_price(sec, row):
-    return "$45" if sec == "C" and row in ["A","B","C","D","E"] else "$35"
+    return 45 if sec == "C" and row in ["A","B","C","D","E"] else 35
 
-def render_seat(col, section_code, row, num, df, tab_name):
-    sid_data = f"{section_code}{row}{num:02d}"
-    unique_key = f"{tab_name}_{sid_data}"
-    price = get_price(section_code, row)
-    match = df[df['m_id'] == sid_data] if not df.empty else pd.DataFrame()
-    is_sold = not match.empty and "sold" in str(match.iloc[0].get("Seat_Status", "")).lower()
-    btn_label = f"{num}\n{price}"
-    if is_sold:
-        buyer = str(match.iloc[0].get("Buyer_Name", "Unknown"))
-        if col.button(btn_label, key=unique_key, type="secondary"):
-            # ADDED SEAT NUMBER IN TOAST
-            st.toast(f"👤 {buyer} | Seat: {section_code}-{row}{num}", icon="🎟️")
-    else:
-        col.button(btn_label, key=unique_key, type="primary")
+def seat_html(status, num, price):
+    return f'<div class="seat {status}"><div class="seat-num">{num}</div><div class="seat-price">${price}</div></div>'
 
-# --- APP START ---
-st.markdown(f'''
-<div class="title-banner">
-    <h1 style="font-size: 26px !important; color: #FFFFFF !important;">
-        American Desi Kaka Chale Vanka
-    </h1>
-    <h1 style="font-size: 22px !important; color: #FFD700 !important; margin-top: 5px !important;">
-        અમેરિકન દેસી કાકા ચાલે વાંકા
-    </h1>
-</div>
-''', unsafe_allow_html=True)
+def render_section(section, df):
+    rows, seats = list("ABCDEFGHIJKLMN"), (18 if section == "Center" else 4)
+    html = [f'<tr><td></td><td colspan="{seats + (1 if section == "Center" else 0)}" class="section-header">{section}</td></tr>']
+    for r in rows:
+        row_html = f'<tr><td class="row-label">{r}</td>'
+        for s in range(1, seats + 1):
+            row_html += f'<td>{seat_html(get_status(df, section[0], r, s), s, get_price(section[0], r))}</td>'
+            # Add a 20px spacer after seat 9 in the Center section
+            if section == "Center" and s == 9:
+                row_html += '<td style="width: 20px;"></td>'
+        html.append(row_html + '</tr>')
+    return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
+def render_full(left, center, right):
+    rows = list("ABCDEFGHIJKLMN")
+    # Updated colspan to account for the new spacer cell in the center (+1)
+    html = ['<tr><td></td><td colspan="4" class="section-header">⬅️ L</td><td></td><td colspan="19" class="section-header">🏛️ C</td><td></td><td colspan="4" class="section-header">➡️ R</td></tr>']
+    for r in rows:
+        row_html = f'<tr><td class="row-label">{r}</td>'
+        for s in range(1, 5): row_html += f'<td>{seat_html(get_status(left,"L",r,s),s,get_price("L",r))}</td>'
+        row_html += '<td></td>' # Space between Left and Center
+        for s in range(1, 19): 
+            row_html += f'<td>{seat_html(get_status(center,"C",r,s),s,get_price("C",r))}</td>'
+            # Add the aisle gap after seat 9 in the center portion of the full map
+            if s == 9:
+                row_html += '<td style="width: 20px;"></td>'
+        row_html += '<td></td>' # Space between Center and Right
+        for s in range(1, 5): row_html += f'<td>{seat_html(get_status(right,"R",r,s),s,get_price("R",r))}</td>'
+        html.append(row_html + '</tr>')
+    return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
+
+# --- DATA ---
+data = {k: load_data(v) for k,v in GIDS.items() if k != "Contacts"}
 contact_names, contact_map = get_contacts()
 
-# --- 📩 INQUIRY SECTION ---
+# --- BANNER ---
+st.markdown(f"""
+<div class="custom-banner">
+    <img src="data:image/png;base64,{bin_str}" class="banner-logo">
+    <div class="banner-text">
+        <p class="banner-title">American Desi Kaka Chale Vanka</p>
+        <p class="banner-subtitle">અમેરિકન દેસી કાકા ચાલે વાંકા</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- INQUIRY SECTION ---
 with st.expander("📩 Send Seat Inquiry Request", expanded=True):
-    st.markdown('<span class="bold-label">Your Name (Sender)</span>', unsafe_allow_html=True)
-    sender_name = st.text_input("sender", value="", label_visibility="collapsed")
     
-    st.markdown('<span class="bold-label">Ticket organizer (<span class="red-text">Mandatory</span>):</span>', unsafe_allow_html=True)
+    sender_name = st.text_input("Your Name (Sender)", value="")
+    
+    st.markdown('<span class="mini-label">Ticket organizer (<span style="color:red; font-weight:bold;">Mandatory</span>):</span>', unsafe_allow_html=True)
     selected_person = st.selectbox("org", contact_names, label_visibility="collapsed")
     
     col_ak1, col_ak2 = st.columns(2)
     with col_ak1:
-        st.markdown('<span class="bold-label">Adults</span>', unsafe_allow_html=True)
+        st.markdown('<span class="mini-label">Adults</span>', unsafe_allow_html=True)
         adults = st.number_input("A", 1, 20, 1, label_visibility="collapsed")
     with col_ak2:
-        st.markdown('<span class="bold-label">Kids (<span class="red-text">Age ≤10 Free</span>)</span>', unsafe_allow_html=True)
+        st.markdown('<span class="mini-label">Kids (<span style="color:red; font-weight:bold;">Age ≤10 Free</span>)</span>', unsafe_allow_html=True)
         child = st.number_input("K", 0, 20, 0, label_visibility="collapsed")
     
     col_st1, col_st2 = st.columns([2, 1])
     with col_st1:
-        st.markdown('<span class="bold-label">Section</span>', unsafe_allow_html=True)
-        sec_options = {"Select Section...": 0, "Center VIP (A-E) ($45)": 45, "Center (F-N) ($35)": 35, "Left ($35)": 35, "Right ($35)": 35}
+        st.markdown('<span class="mini-label">Section</span>', unsafe_allow_html=True)
+        sec_options = {
+            "Select Section...": 0,
+            "Center VIP (A-E) ($45)": 45,
+            "Center (F-N) ($35)": 35,
+            "Left ($35)": 35,
+            "Right ($35)": 35
+        }
         section_label = st.selectbox("S", list(sec_options.keys()), label_visibility="collapsed")
         price_per_adult = sec_options[section_label]
+        
     with col_st2:
-        st.markdown('<span class="bold-label">Total</span>', unsafe_allow_html=True)
-        total = adults * price_per_adult if section_label != "Select Section..." else 0
-        st.markdown(f'<div class="total-box-compact">${total if total > 0 else "--"}</div>', unsafe_allow_html=True)
+        st.markdown('<span class="mini-label">Total</span>', unsafe_allow_html=True)
+        if section_label != "Select Section...":
+            total = adults * price_per_adult
+            st.markdown(f'<div class="total-box-compact">${total}</div>', unsafe_allow_html=True)
+        else:
+            total = 0
+            st.markdown('<div class="total-box-compact" style="font-size:12px; color:#666;">--</div>', unsafe_allow_html=True)
 
+    if section_label != "Select Section...":
+        st.markdown(
+            '<div class="payment-box">'
+            '<b>💳 Payment:</b> Please Zelle the total to the selected organizer’s phone number after sending request.'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+    # --- DYNAMIC BUTTON LOGIC ---
     is_ready = selected_person != "Select Ticket Organizer..." and section_label != "Select Section..."
+    
     if is_ready:
         first_name = selected_person.split()[0]
         phone = contact_map[selected_person].replace("+", "").replace("-", "").replace(" ", "")
-        msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {section_label.split(' ($')[0]}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}\n\n- From: {sender_name}"
+        clean_section = section_label.split(" ($")[0]
+        msg_text = f"Hi {first_name},\n\nInquiry for American Kaka:\n- Section: {clean_section}\n- Adults: {adults}\n- Kids: {child}\n- Total: ${total}\n\n- From: {sender_name}"
         msg_encoded = urllib.parse.quote(msg_text)
-        wa_link, sms_link = f"https://wa.me/{phone}?text={msg_encoded}", f"sms:{phone};?&body={msg_encoded}"
-        wa_label, sms_label = f"💬 Send WhatsApp ({first_name})", f"📱 Send Text ({first_name})"
-        wa_style, sms_style = "wa-btn", "sms-btn"
+        
+        wa_link = f"https://wa.me/{phone}?text={msg_encoded}"
+        sms_link = f"sms:{phone};?&body={msg_encoded}"
+        wa_label = f"💬 Send WhatsApp ({first_name})"
+        sms_label = f"📱 Send Text ({first_name})"
+        wa_style = "wa-btn"
+        sms_style = "sms-btn"
     else:
-        wa_link = sms_link = "#"
-        wa_label, sms_label = "💬 Send WhatsApp", "📱 Send Text"
-        wa_style = sms_style = "disabled-btn"
+        wa_link = "#"
+        sms_link = "#"
+        wa_label = "💬 Send WhatsApp"
+        sms_label = "📱 Send Text"
+        wa_style = "disabled-btn"
+        sms_style = "disabled-btn"
 
     st.markdown(f'<a href="{wa_link}" target="_blank" class="action-button {wa_style}">{wa_label}</a>', unsafe_allow_html=True)
     st.markdown(f'<a href="{sms_link}" class="action-button {sms_style}">{sms_label}</a>', unsafe_allow_html=True)
 
-# --- 🎬 MAP SECTION ---
-data = {k: load_data(v) for k,v in GIDS.items() if k != "Contacts"}
-#rows = list("ABCDEFGHIJKLMN")
-rows = list("ABCDEFGHIJKL")
+# --- MAP SECTION ---
+st.markdown('<div style="background:#fff3cd; padding:8px; border-radius:8px; font-size:12px; text-align:center; margin-bottom:10px; color:#856404; font-weight:500;">The map below shows available seats. First-come, first-served.</div>', unsafe_allow_html=True)
 
-t1, t2, t3, t4 = st.tabs(["📍 Full Map", "⬅️ Left", "🏛️ Center", "➡️ Right"])
-
-with t1:
-    for r in rows:
-        cols = st.columns([0.5, 1,1,1,1, 0.4, 1,1,1,1,1,1,1,1,1, 0.2, 1,1,1,1,1,1,1,1,1, 0.4, 1,1,1,1])
-        cols[0].markdown(f'<div class="row-label">{r}</div>', unsafe_allow_html=True)
-        for s in range(1, 5): render_seat(cols[s], "L", r, s, data["Left"], "f")
-        for s in range(1, 10): render_seat(cols[s+5], "C", r, s, data["Center"], "f")
-        for s in range(10, 19): render_seat(cols[s+6], "C", r, s, data["Center"], "f")
-        for s in range(1, 5): render_seat(cols[s+25], "R", r, s, data["Right"], "f")
-
-with t2:
-    for r in rows:
-        cols = st.columns([0.5, 1, 1, 1, 1, 15])
-        cols[0].markdown(f'<div class="row-label">{r}</div>', unsafe_allow_html=True)
-        for s in range(1, 5): render_seat(cols[s], "L", r, s, data["Left"], "l")
-
-with t3:
-    for r in rows:
-        cols = st.columns([0.5] + [1]*9 + [0.3] + [1]*9)
-        cols[0].markdown(f'<div class="row-label">{r}</div>', unsafe_allow_html=True)
-        for s in range(1, 10): render_seat(cols[s], "C", r, s, data["Center"], "c")
-        for s in range(10, 19): render_seat(cols[s+1], "C", r, s, data["Center"], "c")
-
-with t4:
-    for r in rows:
-        cols = st.columns([0.5, 1, 1, 1, 1, 15])
-        cols[0].markdown(f'<div class="row-label">{r}</div>', unsafe_allow_html=True)
-        for s in range(1, 5): render_seat(cols[s], "R", r, s, data["Right"], "r")
+t1, t2, t3, t4 = st.tabs(["📍 Map", "⬅️ Left", "🏛️ Center", "➡️ Right"])
+with t1: st.markdown(render_full(data["Left"], data["Center"], data["Right"]), unsafe_allow_html=True)
+with t2: st.markdown(render_section("Left", data["Left"]), unsafe_allow_html=True)
+with t3: st.markdown(render_section("Center", data["Center"]), unsafe_allow_html=True)
+with t4: st.markdown(render_section("Right", data["Right"]), unsafe_allow_html=True)
 
 st.divider()
-if st.button("🔄 Force Refresh"):
+if st.button("🔄 Refresh Seating", use_container_width=True):
     st.cache_data.clear()
     st.rerun()
