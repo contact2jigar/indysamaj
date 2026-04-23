@@ -143,7 +143,8 @@ def render_section(section, df):
     return f'<div class="mobile-wrapper"><table class="seat-table">{"".join(html)}</table></div>'
 
 def render_full(left, center, right):
-    rows = list("ABCDEFGHIJKLMN")
+    #rows = list("ABCDEFGHIJKLMN")
+    rows = list("ABCDEFGHIJKL")
     # Updated colspan to account for the new spacer cell in the center (+1)
     html = ['<tr><td></td><td colspan="4" class="section-header">⬅️ L</td><td></td><td colspan="19" class="section-header">🏛️ C</td><td></td><td colspan="4" class="section-header">➡️ R</td></tr>']
     for r in rows:
