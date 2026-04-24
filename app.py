@@ -145,14 +145,30 @@ div[data-testid="stExpander"] {{
 .available {{ background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%); cursor: default; }}
 .sold {{ background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%); cursor: help; }}
 
-/* --- TOOLTIP --- */
+/* --- TOOLTIP BASE --- */
 .tooltip-text {{
-    visibility: hidden; width: 240px; background-color: #212529; color: #fff; 
+    visibility: hidden; width: 220px; background-color: #212529; color: #fff; 
     text-align: center; border-radius: 6px; padding: 8px; position: absolute;
-    z-index: 100; bottom: 130%; left: 50%; margin-left: -120px; opacity: 0;
+    z-index: 100; bottom: 130%; left: 50%; margin-left: -110px; opacity: 0;
     transition: opacity 0.2s; font-size: 11px; border: 1px solid rgba(255,255,255,0.1);
 }}
-.sold:hover .tooltip-text {{ visibility: visible; opacity: 1; }}
+
+.sold:hover .tooltip-text, .available:hover .tooltip-text {{ 
+    visibility: visible; 
+    opacity: 1; 
+}}
+
+/* DARK RED TOOLTIP FOR SOLD */
+.sold .tooltip-text {{
+    background-color: #4a0000 !important;
+    border: 1px solid #8b0000 !important;
+}}
+
+/* DARK GREEN TOOLTIP FOR AVAILABLE */
+.tooltip-available {{ 
+    background-color: #0d3d0f !important; 
+    border: 1px solid #1b5e20 !important; 
+}}
 
 /* --- ACTION BUTTONS --- */
 .total-box-compact {{ 
@@ -217,7 +233,9 @@ def seat_html(status, num, price, buyer="", full_id=""):
         tooltip_content = f'<span class="tooltip-text">👤 {buyer} &nbsp;|&nbsp; 🎟️ {full_id}</span>'
         return f'<div class="seat sold"><div class="seat-num">{num}</div><div class="seat-price">${price}</div>{tooltip_content}</div>'
     else:
-        return f'<div class="seat available"><div class="seat-num">{num}</div><div class="seat-price">${price}</div></div>'
+        # Added Price into the Available tooltip
+        tooltip_content = f'<span class="tooltip-text tooltip-available">✅ Available: ${price} &nbsp;|&nbsp; 🎟️ {full_id}</span>'
+        return f'<div class="seat available"><div class="seat-num">{num}</div><div class="seat-price">${price}</div>{tooltip_content}</div>'
 
 def render_section(section, df):
     rows, seats = list("ABCDEFGHIJKLMN"), (18 if section == "Center" else 4)
