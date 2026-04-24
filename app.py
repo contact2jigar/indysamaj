@@ -170,6 +170,29 @@ div[data-testid="stExpander"] {{
     border: 1px solid #1b5e20 !important; 
 }}
 
+/* --- SCROLLABLE MAP FIX --- */
+.mobile-wrapper {{
+    width: 100%;
+    overflow-x: auto; /* Enables horizontal scroll */
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iPhone */
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}}
+
+.seat-table {{ 
+    border-collapse: separate; 
+    border-spacing: 4px; 
+    margin: 0 auto; 
+    min-width: 800px; /* Forces the table to be wide enough to scroll */
+}}
+
+.row-label {{
+    font-weight: bold;
+    padding-right: 10px;
+    color: #333;
+}}
+
 /* --- ACTION BUTTONS --- */
 .total-box-compact {{ 
     background: #111827; color: white; padding: 8px; border-radius: 8px; 
