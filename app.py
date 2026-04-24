@@ -170,27 +170,58 @@ div[data-testid="stExpander"] {{
     border: 1px solid #1b5e20 !important; 
 }}
 
-/* --- SCROLLABLE MAP FIX --- */
+/* --- SCROLLABLE MAP & COMPACT SEATING FIX --- */
 .mobile-wrapper {{
     width: 100%;
-    overflow-x: auto; /* Enables horizontal scroll */
+    overflow-x: auto;
     overflow-y: hidden;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iPhone */
+    -webkit-overflow-scrolling: touch;
     margin-bottom: 20px;
-    padding-bottom: 10px;
 }}
 
 .seat-table {{ 
     border-collapse: separate; 
     border-spacing: 4px; 
     margin: 0 auto; 
-    min-width: 800px; /* Forces the table to be wide enough to scroll */
+    width: auto !important; /* Fix: Table only takes needed space */
+    table-layout: fixed; /* Fix: Keeps column widths strict */
+}}
+
+/* Force every seat column to be tight */
+.seat-table td {{
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    padding: 0 !important;
+    text-align: center;
+}}
+
+.seat-table td {{
+    width: 42px !important;      /* Increased from 36px to 42px */
+    min-width: 42px !important;
+    max-width: 42px !important;
+    padding: 2px !important;     /* Added tiny bit of padding */
+    text-align: center;
+}}
+
+.seat {{
+    width: 34px;                 /* Slightly larger seat */
+    height: 34px; 
+    margin: 0 auto;              /* Centers seat in the column */
+    font-size: 10px;             /* Keeps text fitting inside */
 }}
 
 .row-label {{
+    width: 30px !important;
+    min-width: 30px !important;
     font-weight: bold;
-    padding-right: 10px;
     color: #333;
+}}
+
+/* Keeps the section headers (L, C, R) looking right */
+.section-header {{
+    width: auto !important;
+    min-width: 0px !important;
 }}
 
 /* --- ACTION BUTTONS --- */
